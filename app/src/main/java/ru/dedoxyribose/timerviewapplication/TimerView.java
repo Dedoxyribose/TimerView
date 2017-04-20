@@ -262,17 +262,17 @@ public class TimerView extends View {
         float density = getResources().getDisplayMetrics().density;
 
         // Defaults, may need to link this into theme settings
-        int grooveColor = ContextCompat.getColor(context, R.color.colorArc);
-        int progressColor = ContextCompat.getColor(context, R.color.colorProgress);
+        int grooveColor = ContextCompat.getColor(context, R.color.colorPrimaryDark);
+        int progressColor = ContextCompat.getColor(context, R.color.colorAccent);
 
-        int bigTextColor = ContextCompat.getColor(context, R.color.colorText);
-        int smallTextColor = ContextCompat.getColor(context, R.color.colorText);
+        int bigTextColor = ContextCompat.getColor(context, R.color.colorAccent);
+        int smallTextColor = ContextCompat.getColor(context, R.color.colorAccent);
 
-        int backColor = ContextCompat.getColor(context, R.color.colorBack);
+        int backColor = ContextCompat.getColor(context, R.color.colorPrimary);
 
-        int playButtonTint = ContextCompat.getColor(context, R.color.colorProgress);
-        int pauseButtonTint = ContextCompat.getColor(context, R.color.colorProgress);
-        int finishIconTint = ContextCompat.getColor(context, R.color.colorProgress);
+        int playButtonTint = ContextCompat.getColor(context, R.color.colorAccent);
+        int pauseButtonTint = ContextCompat.getColor(context, R.color.colorAccent);
+        int finishIconTint = ContextCompat.getColor(context, R.color.colorAccent);
 
         mProgressWidth = (int) (mProgressWidth * density);
         mGrooveWidth = (int) (mGrooveWidth * density);
@@ -936,7 +936,7 @@ public class TimerView extends View {
      * Change the progress width value
      *
      * @param progressWidth the new progress width value. Keep in mind that this value must be equal or smaller
-     *                    than the groove width value. Otherwise the progress arc won't be able to fit the view
+     *                    than the groove width value (unless it's 0). Otherwise the progress arc won't be able to fit the view
      */
     public void setProgressWidth(int progressWidth) {
         this.mProgressWidth = progressWidth;
@@ -969,8 +969,8 @@ public class TimerView extends View {
     /**
      * Set the groove width value
      *
-     * @param grooveWidth the new groove width value. Keep in mind that this value must be equal or bigger
-     *                    than the progress width value. Otherwise the progress arc won't be able to fit the view
+     * @param grooveWidth the new groove width value. Keep in mind that this value must be either equal or bigger
+     *                    than the progress width value or it must be 0. Otherwise the progress arc won't be able to fit the view
      */
     public void setGrooveWidth(int grooveWidth) {
         this.mGrooveWidth = grooveWidth;
