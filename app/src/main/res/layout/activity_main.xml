@@ -7,12 +7,36 @@
     android:background="#bbb"
     tools:context="ru.dedoxyribose.timerviewapplication.MainActivity">
 
-    <ru.dedoxyribose.timerviewapplication.TimerView
-        android:id="@+id/timerView"
+    <ru.dedoxyribose.timerview.TimerView
+        android:id="@+id/timerView1"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:layout_centerHorizontal="false"
-        android:layout_centerInParent="true"
+        android:layout_centerHorizontal="true"
+        android:layout_centerInParent="false"
+        android:layout_centerVertical="false"
+        android:layout_marginBottom="45dp"
+        android:layout_marginTop="45dp"
+        app:grooveWidth="17dp"
+        app:progressWidth="8dp"
+        app:grooveColor="@color/colorPrimaryDark"
+        app:progressColor="@color/colorAccent"
+        app:backgroundCircleColor="@color/colorPrimary"
+        app:countdown="true"
+        app:allowMoveForward="true"
+        app:allowMoveBackward="false"
+        app:bigTextSize="25sp"
+        app:bigTextColor="@color/colorAccent"
+        app:fulltime="8000"
+        app:playButtonTriangleSideLength="45dp"/>
+
+    <ru.dedoxyribose.timerview.TimerView
+        android:id="@+id/timerView2"
+        android:layout_below="@+id/timerView1"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_centerHorizontal="true"
         android:layout_centerVertical="false"
         />
+
+
 </RelativeLayout>

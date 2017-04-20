@@ -5,89 +5,69 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 
+import ru.dedoxyribose.timerview.TimerView;
+
 public class MainActivity extends AppCompatActivity {
 
-    TimerView mTimerView;
+    private static final String TAG = "TAG TVA";
+    TimerView mTimerView1;
+    TimerView mTimerView2;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mTimerView = (TimerView) findViewById(R.id.timerView);
-        mTimerView.setOnTimerViewChangeListener(new TimerView.OnTimerViewChangeListener() {
+        mTimerView1 = (TimerView) findViewById(R.id.timerView1);
+        mTimerView1.setOnTimerViewChangeListener(new TimerView.OnTimerViewChangeListener() {
             @Override
             public void onTimeChangedByUser(TimerView timerView, int time) {
-                Log.d("TVA main", "onTimeChangedByUser time="+time);
+                Log.d(TAG, "onTimeChangedByUser time="+time);
             }
 
             @Override
             public void onStartTrackingTouch(TimerView timerView) {
-                Log.d("TVA main", "onStartTrackingTouch");
+                Log.d(TAG, "onStartTrackingTouch");
             }
 
             @Override
             public void onStopTrackingTouch(TimerView timerView) {
-                Log.d("TVA main", "onStopTrackingTouch");
+                Log.d(TAG, "onStopTrackingTouch");
             }
 
             @Override
             public void onPlayStarted(TimerView timerView) {
-                Log.d("TVA main", "onPlayStarted");
+                Log.d(TAG, "onPlayStarted");
             }
 
             @Override
             public void onPlayStopped(TimerView timerView) {
-                Log.d("TVA main", "onPlayStopped");
+                Log.d(TAG, "onPlayStopped");
             }
 
             @Override
             public void onPlayFinished(TimerView timerView) {
-                Log.d("TVA main", "onPlayFinished");
+                Log.d(TAG, "onPlayFinished");
             }
         });
 
-        mTimerView.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                /*mTimerView.setPlayButtonIconTint(ContextCompat.getColor(getApplication(), R.color.colorAdd));
-                mTimerView.setPauseButtonIconTint(ContextCompat.getColor(getApplication(), R.color.colorAdd));
-                mTimerView.setFinishIconTint(ContextCompat.getColor(getApplication(), R.color.colorAdd));
 
-                mTimerView.setPlayButtonIcon(R.mipmap.ic_launcher);
-                mTimerView.setCustomBackgroundDrawable(R.mipmap.ic_launcher);
+        //for TimerView2 we will set values manually, not in xml
 
-                mTimerView.setCurTime(0);*/
+        mTimerView2.setGrooveWidth(10);
+        mTimerView2.setProgressWidth(10);
 
-                //mTimerView.setAllowMoveBackward(false);
+        mTimerView2.setGrooveColor(ContextCompat.getColor(getApplication(), R.color.colorArc));
+        mTimerView2.setProgressColor(ContextCompat.getColor(getApplication(), R.color.colorProgress));
+        mTimerView2.setBigTextColor(ContextCompat.getColor(getApplication(), R.color.colorProgress));
+        mTimerView2.setSmallTextColor(ContextCompat.getColor(getApplication(), R.color.colorProgress));
+        mTimerView2.setCircleBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorBack));
+        mTimerView2.setPlayButtonIconTint(ContextCompat.getColor(getApplication(), R.color.colorProgress));
+        mTimerView2.setPauseButtonIconTint(ContextCompat.getColor(getApplication(), R.color.colorProgress));
+        mTimerView2.setFinishIconTint(ContextCompat.getColor(getApplication(), R.color.colorProgress));
 
-                //mTimerView.setPlayButtonTriangleSideLength(150);
-
-                //mTimerView.setProgressWidth(58);
-
-                //mTimerView.setCircleBackgroundColor(ContextCompat.getColor(getApplication(), R.color.colorAdd));
-
-                //mTimerView.setSmallTextSize(48);
-
-                //mTimerView.setTimeFormat("hh:mm:ss");
-
-                //mTimerView.setBigTextColor(ContextCompat.getColor(getApplication(), R.color.colorAdd));
-
-                //mTimerView.setCountdown(true);
-
-
-
-            }
-        }, 2000);
-
-        //mTimerView.setProgressWidth(188);
-
-        mTimerView.setTimeFormat("HH:mm:ss");
-
-
-
-        //mTimerView.setFullTime(8000);
-
-        //mTimerView.setSmallTextColor(ContextCompat.getColor(getApplication(), R.color.colorAdd));
+        mTimerView2.setBigTextSize(10);
+        mTimerView2.setPlayButtonTriangleSideLength(12);
     }
 }

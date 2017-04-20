@@ -1,4 +1,4 @@
-package ru.dedoxyribose.timerviewapplication;
+package ru.dedoxyribose.timerview;
 
 import android.animation.Animator;
 import android.animation.ValueAnimator;
@@ -23,6 +23,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.LinearInterpolator;
@@ -175,7 +176,7 @@ public class TimerView extends View {
     /**
      * whether the view is touchable
      */
-    private boolean mEnabled;
+    private boolean mEnabled = true;
 
     private Paint mGroovePaint;
 
@@ -261,18 +262,24 @@ public class TimerView extends View {
 
         float density = getResources().getDisplayMetrics().density;
 
-        // Defaults, may need to link this into theme settings
-        int grooveColor = ContextCompat.getColor(context, R.color.colorPrimaryDark);
-        int progressColor = ContextCompat.getColor(context, R.color.colorAccent);
 
-        int bigTextColor = ContextCompat.getColor(context, R.color.colorAccent);
-        int smallTextColor = ContextCompat.getColor(context, R.color.colorAccent);
+        TypedValue typedValue = new TypedValue();
+        TypedArray a = context.obtainStyledAttributes(typedValue.data, new int[] { R.attr.colorPrimary, R.attr.colorPrimaryDark,
+            R.attr.colorAccent});
 
-        int backColor = ContextCompat.getColor(context, R.color.colorPrimary);
+        int grooveColor = a.getColor(1, ContextCompat.getColor(context, R.color.colorPrimaryDark));
+        int progressColor = a.getColor(2, ContextCompat.getColor(context, R.color.colorAccent));
 
-        int playButtonTint = ContextCompat.getColor(context, R.color.colorAccent);
-        int pauseButtonTint = ContextCompat.getColor(context, R.color.colorAccent);
-        int finishIconTint = ContextCompat.getColor(context, R.color.colorAccent);
+        int bigTextColor = a.getColor(2, ContextCompat.getColor(context, R.color.colorAccent));
+        int smallTextColor = a.getColor(2, ContextCompat.getColor(context, R.color.colorAccent));
+
+        int backColor = a.getColor(0, ContextCompat.getColor(context, R.color.colorPrimary));
+
+        int playButtonTint = a.getColor(2, ContextCompat.getColor(context, R.color.colorAccent));
+        int pauseButtonTint = a.getColor(2, ContextCompat.getColor(context, R.color.colorAccent));
+        int finishIconTint = a.getColor(2, ContextCompat.getColor(context, R.color.colorAccent));
+
+        a.recycle();
 
         mProgressWidth = (int) (mProgressWidth * density);
         mGrooveWidth = (int) (mGrooveWidth * density);
@@ -281,15 +288,15 @@ public class TimerView extends View {
 
         if (attrs != null) {
             // Attribute initialization
-            final TypedArray a = context.obtainStyledAttributes(attrs,
+            final TypedArray b = context.obtainStyledAttributes(attrs,
                     R.styleable.TimerView, 0, 0);
 
-            if (a.hasValue(R.styleable.TimerView_timeFormat))
-                mTimeFormat = a.getString(R.styleable.TimerView_timeFormat);
+            if (b.hasValue(R.styleable.TimerView_timeFormat))
+                mTimeFormat = b.getString(R.styleable.TimerView_timeFormat);
 
-            playButtonTint = a.getColor(R.styleable.TimerView_playButtonTint, playButtonTint);
+            playButtonTint = b.getColor(R.styleable.TimerView_playButtonTint, playButtonTint);
 
-            mPlayIcon = a.getDrawable(R.styleable.TimerView_playIcon);
+            mPlayIcon = b.getDrawable(R.styleable.TimerView_playIcon);
             if (mPlayIcon != null) {
                 int playIconHalfWidth = mPlayIcon.getIntrinsicWidth() / 2;
                 int playIconHalfHeight = mPlayIcon.getIntrinsicHeight() / 2;
@@ -297,15 +304,15 @@ public class TimerView extends View {
                 mPlayIcon.setBounds(-playIconHalfWidth, -playIconHalfHeight, playIconHalfWidth,
                         playIconHalfHeight);
 
-                if (a.hasValue(R.styleable.TimerView_playButtonTint)) {
+                if (b.hasValue(R.styleable.TimerView_playButtonTint)) {
                     mPlayButtonTint=playButtonTint;
                     mPlayIcon.setColorFilter(new PorterDuffColorFilter(mPlayButtonTint, PorterDuff.Mode.SRC_ATOP));
                 }
             }
 
-            pauseButtonTint = a.getColor(R.styleable.TimerView_pauseButtonTint, pauseButtonTint);
+            pauseButtonTint = b.getColor(R.styleable.TimerView_pauseButtonTint, pauseButtonTint);
 
-            mPauseIcon = a.getDrawable(R.styleable.TimerView_pauseIcon);
+            mPauseIcon = b.getDrawable(R.styleable.TimerView_pauseIcon);
             if (mPauseIcon != null) {
                 int playIconHalfWidth = mPauseIcon.getIntrinsicWidth() / 2;
                 int playIconHalfHeight = mPauseIcon.getIntrinsicHeight() / 2;
@@ -313,15 +320,15 @@ public class TimerView extends View {
                 mPauseIcon.setBounds(-playIconHalfWidth, -playIconHalfHeight, playIconHalfWidth,
                         playIconHalfHeight);
 
-                if (a.hasValue(R.styleable.TimerView_pauseButtonTint)) {
+                if (b.hasValue(R.styleable.TimerView_pauseButtonTint)) {
                     mPauseButtonTint=pauseButtonTint;
                     mPauseIcon.setColorFilter(new PorterDuffColorFilter(mPauseButtonTint, PorterDuff.Mode.SRC_ATOP));
                 }
             }
 
-            finishIconTint = a.getColor(R.styleable.TimerView_finishIconTint, finishIconTint);
+            finishIconTint = b.getColor(R.styleable.TimerView_finishIconTint, finishIconTint);
 
-            mFinishIcon = a.getDrawable(R.styleable.TimerView_finishIcon);
+            mFinishIcon = b.getDrawable(R.styleable.TimerView_finishIcon);
             if (mFinishIcon != null) {
                 int finishIconHalfWidth = mFinishIcon.getIntrinsicWidth() / 2;
                 int finishIconHalfHeight = mFinishIcon.getIntrinsicHeight() / 2;
@@ -329,41 +336,41 @@ public class TimerView extends View {
                 mFinishIcon.setBounds(-finishIconHalfWidth, -finishIconHalfHeight, finishIconHalfWidth,
                         finishIconHalfHeight);
 
-                if (a.hasValue(R.styleable.TimerView_finishIconTint)) {
+                if (b.hasValue(R.styleable.TimerView_finishIconTint)) {
                     mFinishIconTint = finishIconTint;
                     mFinishIcon.setColorFilter(new PorterDuffColorFilter(mFinishIconTint, PorterDuff.Mode.SRC_ATOP));
                 }
             }
 
-            mBackgroundDrawable = a.getDrawable(R.styleable.TimerView_backgroundCircleDrawable);
+            mBackgroundDrawable = b.getDrawable(R.styleable.TimerView_backgroundCircleDrawable);
 
-            mFullTime = a.getInteger(R.styleable.TimerView_fulltime, mFullTime);
-            mCurTime = a.getInteger(R.styleable.TimerView_curtime, mCurTime);
+            mFullTime = b.getInteger(R.styleable.TimerView_fulltime, mFullTime);
+            mCurTime = b.getInteger(R.styleable.TimerView_curtime, mCurTime);
 
-            mProgressWidth = (int) a.getDimension(R.styleable.TimerView_progressWidth, mProgressWidth);
-            progressColor = a.getColor(R.styleable.TimerView_progressColor, progressColor);
+            mProgressWidth = (int) b.getDimension(R.styleable.TimerView_progressWidth, mProgressWidth);
+            progressColor = b.getColor(R.styleable.TimerView_progressColor, progressColor);
 
-            mGrooveWidth = (int) a.getDimension(R.styleable.TimerView_grooveWidth, mGrooveWidth);
-            grooveColor = a.getColor(R.styleable.TimerView_grooveColor, grooveColor);
+            mGrooveWidth = (int) b.getDimension(R.styleable.TimerView_grooveWidth, mGrooveWidth);
+            grooveColor = b.getColor(R.styleable.TimerView_grooveColor, grooveColor);
 
-            mPlayButtonTriangleSideLength = (int) a.getDimension(R.styleable.TimerView_playButtonTriangleSideLength,
+            mPlayButtonTriangleSideLength = (int) b.getDimension(R.styleable.TimerView_playButtonTriangleSideLength,
                     mPlayButtonTriangleSideLength);
 
-            mBigTextSize = (int) a.getDimension(R.styleable.TimerView_bigTextSize, mBigTextSize);
-            mSmallTextSize = (int) a.getDimension(R.styleable.TimerView_smallTextSize, mSmallTextSize);
-            bigTextColor = a.getColor(R.styleable.TimerView_bigTextColor, bigTextColor);
-            smallTextColor = a.getColor(R.styleable.TimerView_smallTextColor, smallTextColor);
+            mBigTextSize = (int) b.getDimension(R.styleable.TimerView_bigTextSize, mBigTextSize);
+            mSmallTextSize = (int) b.getDimension(R.styleable.TimerView_smallTextSize, mSmallTextSize);
+            bigTextColor = b.getColor(R.styleable.TimerView_bigTextColor, bigTextColor);
+            smallTextColor = b.getColor(R.styleable.TimerView_smallTextColor, smallTextColor);
 
-            backColor = a.getColor(R.styleable.TimerView_backgroundCircleColor, backColor);
+            backColor = b.getColor(R.styleable.TimerView_backgroundCircleColor, backColor);
 
-            mAllowMoveForward = a.getBoolean(R.styleable.TimerView_allowMoveForward, mAllowMoveForward);
-            mAllowMoveBackward = a.getBoolean(R.styleable.TimerView_allowMoveBackward, mAllowMoveBackward);
+            mAllowMoveForward = b.getBoolean(R.styleable.TimerView_allowMoveForward, mAllowMoveForward);
+            mAllowMoveBackward = b.getBoolean(R.styleable.TimerView_allowMoveBackward, mAllowMoveBackward);
 
-            mEnabled = a.getBoolean(R.styleable.TimerView_enabled, mEnabled);
+            mEnabled = b.getBoolean(R.styleable.TimerView_enabled, mEnabled);
 
-            mCountdown = a.getBoolean(R.styleable.TimerView_countdown, mCountdown);
+            mCountdown = b.getBoolean(R.styleable.TimerView_countdown, mCountdown);
 
-            a.recycle();
+            b.recycle();
         }
 
         // range check
@@ -599,13 +606,14 @@ public class TimerView extends View {
 
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    mThisTouchUpdateTimes=0;
-                    mTimeBeforeTouch =mCurTime;
+                    mThisTouchUpdateTimes = 0;
+                    mTimeBeforeTouch = mCurTime;
 //					updateOnTouch(event);
                     if (touchHitsArc(event) && (mAllowMoveBackward || mAllowMoveForward)) {
                         mIsTouchProgress=true;
                         if (mOnTimerViewChangeListener != null)
                             mOnTimerViewChangeListener.onStartTrackingTouch(this);
+                        updateOnTouch(event);
                     }
                     break;
                 case MotionEvent.ACTION_MOVE:
@@ -908,7 +916,7 @@ public class TimerView extends View {
     /**
      * Change the current time progress value
      *
-     * @param curtime the new value of time
+     * @param curtime the new value of time in milliseconds
      */
 
     public void setCurTime(int curtime) {
@@ -917,7 +925,7 @@ public class TimerView extends View {
     }
 
     /**
-     * Get the current time progress value
+     * Get the current time progress value in milliseconds
      *
      */
     public int getCurTime() {
@@ -1023,19 +1031,19 @@ public class TimerView extends View {
     }
 
     /**
-     * Get the arc color value
+     * Get the groove color value
      *
      */
-    public int getArcColor() {
+    public int getGrooveColor() {
         return mGroovePaint.getColor();
     }
 
     /**
-     * Set the arc color value
+     * Set the groove color value
      *
-     * @param color the new arc color value
+     * @param color the new groove color value
      */
-    public void setArcColor(int color) {
+    public void setGrooveColor(int color) {
         mGroovePaint.setColor(color);
         invalidate();
     }
@@ -1084,7 +1092,7 @@ public class TimerView extends View {
     }
 
     /**
-     * Get the time value representing the whole cycle of the timer (the max value)
+     * Get the time value representing the whole cycle of the timer (the max value) in milliseconds
      *
      */
     public int getFullTime() {
@@ -1094,7 +1102,7 @@ public class TimerView extends View {
     /**
      * Set the time value representing the whole cycle of the timer (the max value)
      *
-     * @param fullTime the new fulltime value
+     * @param fullTime the new fulltime value in milliseconds
      */
     public void setFullTime(int fullTime) {
         if (fullTime <= 0)
