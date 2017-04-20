@@ -3,7 +3,9 @@ package ru.dedoxyribose.timerviewapplication;
 import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.Resources;
 import android.content.res.TypedArray;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -12,9 +14,12 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffColorFilter;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.DrawableRes;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
@@ -24,6 +29,7 @@ import android.view.animation.LinearInterpolator;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * Created by Ryan on 18.04.2017.
@@ -40,8 +46,6 @@ public class TimerView extends View {
     private static final float FINISH_SHAPE_SIZE_FACTOR = 2.0f;
     private static final float FINISH_SHAPE_STROKE_WIDTH_FACTOR = 8f;
 
-
-
     /**
      * Offset = -90 indicates that the progress starts from 12 o'clock.
      */
@@ -51,59 +55,133 @@ public class TimerView extends View {
      * The current points value.
      */
     private int mCurTime = 0;
+
+    /**
+     * The string containing formatted representation of time how it will be print out on the timer
+     */
     private String mCurFormattedTime;
 
     /**
-     * The Maximum value that this SeekArc can be set to
+     * The time representing the whole cycle of the timer
      */
     private int mFullTime = 60000;
 
-
+    /**
+     * The system time on the previous animation step
+     */
     private long mPreviousSystemTime;
 
     /**
      * The Drawable for the play button
      */
     private Drawable mPlayIcon;
+
+    /**
+     * The lenght of the side of the triangle representing the play button (if custom drawable not set by user)
+     */
     private int mPlayButtonTriangleSideLength=-1;
+
+    /**
+     * The shape of the triangle representing the play button (if custom drawable not set by user)
+     */
     private Path mPlayTriangle;
 
     /**
      * The Drawable for the pause button
      */
     private Drawable mPauseIcon;
+
+    /**
+     * The shape of the pause button (if custom drawable not set by user)
+     */
     private Path mPauseShape;
 
+    /**
+     * The Drawable for the finish icon
+     */
     private Drawable mFinishIcon;
+
+    /**
+     * The shape of the finish icon (if custom drawable not set by user)
+     */
     private Path mFinishShape;
 
+    /**
+     * The Drawable for the background
+     */
     private Drawable mBackgroundDrawable;
 
-    private int mProgressWidth = 12;
-    private int mArcWidth = 12;
-    private boolean mEnabled = true;
-
-    //
-    // internal variables
-    //
     /**
-     * The counts of point update to determine whether to change previous progress.
+     * The width of the progress arc
+     */
+    private int mProgressWidth = 12;
+
+    /**
+     * The width of the groove arc (under progress)
+     */
+    private int mGrooveWidth = 12;
+
+    /**
+     * The width of the groove arc or if it's <=0, the width of the progress arc
+     */
+    private int mArcWidth = 12;
+
+    /**
+     * The radius of the view area
+     */
+    private int mFullRadius = 12;
+
+    /**
+     * The amount of touch events received at the current touch session
+     */
+    private boolean mCountdown = true;
+
+    /**
+     * The amount of touch events received at the current touch session
      */
     private int mThisTouchUpdateTimes = 0;
-    private float mPreviousProgress = -1;
-    private float mCurrentProgress = 0;
-    private float mProgressBeforeTouch = 0;
 
+    /**
+     * The time of the previous moment
+     */
+    private int mPreviousTime = -1;
+
+    /**
+     * The time before current touch session started
+     */
+    private int mTimeBeforeTouch = 0;
+
+    /**
+     * The format for the time representation on the screen
+     */
     private String mTimeFormat = "mm:ss";
 
+    /**
+     * The radius of the inner arc
+     */
     private int mArcRadius = 0;
     private RectF mArcRect = new RectF();
-    private Paint mArcPaint;
+
+    private RectF mBackRect = new RectF();
 
     private float mRealProgressSweep = 0;
+
+    /**
+     * The progress sweep value adjusted by the animation
+     */
     private float mVisibleProgressSweep = 0;
     private Paint mProgressPaint;
 
+    /**
+     * whether the view is touchable
+     */
+    private boolean mEnabled;
+
+    private Paint mGroovePaint;
+
+    /**
+     * The animator for smooth transitions
+     */
     private ValueAnimator mSweepAnimation;
 
     private float mBigTextSize = 40;
@@ -115,19 +193,48 @@ public class TimerView extends View {
 
     private Paint mBackPaint;
 
+    private Integer mPlayButtonTint = null;
+    private Integer mPauseButtonTint = null;
+    private Integer mFinishIconTint = null;
+
     private Paint mPlayTrianglePaint;
     private Paint mPauseShapePaint;
     private Paint mFinishShapePaint;
 
+    /**
+     * The center X of the canvas
+     */
     private int mTranslateX;
+
+    /**
+     * The center Y of the canvas
+     */
     private int mTranslateY;
 
-    private boolean mIsTouchProgress=false;
-    private boolean mIsPlaying=false;
-    private boolean mIsAttached=false;
+    /**
+     * Indicates whether the touch is in progress
+     */
+    private boolean mIsTouchProgress = false;
 
-    private boolean mAllowMoveForward=true;
-    private boolean mAllowMoveBackward=true;
+    /**
+     * Indicates whether the playing is in the progress
+     */
+    private boolean mIsPlaying = false;
+
+    /**
+     * Indicates whether the view is attached to the window
+     */
+    private boolean mIsAttached = false;
+
+    /**
+     * Indicates whether the user is allowed to move the time forward manually
+     */
+    private boolean mAllowMoveForward = true;
+
+    /**
+     * Indicates whether the user is allowed to move the time backward manually
+     */
+    private boolean mAllowMoveBackward = true;
 
     /**
      * The current touch angle of arc.
@@ -155,7 +262,7 @@ public class TimerView extends View {
         float density = getResources().getDisplayMetrics().density;
 
         // Defaults, may need to link this into theme settings
-        int arcColor = ContextCompat.getColor(context, R.color.colorArc);
+        int grooveColor = ContextCompat.getColor(context, R.color.colorArc);
         int progressColor = ContextCompat.getColor(context, R.color.colorProgress);
 
         int bigTextColor = ContextCompat.getColor(context, R.color.colorText);
@@ -168,7 +275,7 @@ public class TimerView extends View {
         int finishIconTint = ContextCompat.getColor(context, R.color.colorProgress);
 
         mProgressWidth = (int) (mProgressWidth * density);
-        mArcWidth = (int) (mArcWidth * density);
+        mGrooveWidth = (int) (mGrooveWidth * density);
         mBigTextSize = (int) (mBigTextSize * density);
         mSmallTextSize = (int) (mSmallTextSize * density);
 
@@ -191,7 +298,8 @@ public class TimerView extends View {
                         playIconHalfHeight);
 
                 if (a.hasValue(R.styleable.TimerView_playButtonTint)) {
-                    mPlayIcon.setColorFilter(new PorterDuffColorFilter(playButtonTint, PorterDuff.Mode.SRC_ATOP));
+                    mPlayButtonTint=playButtonTint;
+                    mPlayIcon.setColorFilter(new PorterDuffColorFilter(mPlayButtonTint, PorterDuff.Mode.SRC_ATOP));
                 }
             }
 
@@ -206,7 +314,8 @@ public class TimerView extends View {
                         playIconHalfHeight);
 
                 if (a.hasValue(R.styleable.TimerView_pauseButtonTint)) {
-                    mPauseIcon.setColorFilter(new PorterDuffColorFilter(pauseButtonTint, PorterDuff.Mode.SRC_ATOP));
+                    mPauseButtonTint=pauseButtonTint;
+                    mPauseIcon.setColorFilter(new PorterDuffColorFilter(mPauseButtonTint, PorterDuff.Mode.SRC_ATOP));
                 }
             }
 
@@ -221,21 +330,21 @@ public class TimerView extends View {
                         finishIconHalfHeight);
 
                 if (a.hasValue(R.styleable.TimerView_finishIconTint)) {
-                    mFinishIcon.setColorFilter(new PorterDuffColorFilter(finishIconTint, PorterDuff.Mode.SRC_ATOP));
+                    mFinishIconTint = finishIconTint;
+                    mFinishIcon.setColorFilter(new PorterDuffColorFilter(mFinishIconTint, PorterDuff.Mode.SRC_ATOP));
                 }
             }
 
-            mBackgroundDrawable = a.getDrawable(R.styleable.TimerView_backgroundDrawable);
+            mBackgroundDrawable = a.getDrawable(R.styleable.TimerView_backgroundCircleDrawable);
 
-            mCurTime = a.getInteger(R.styleable.TimerView_points, mCurTime);
             mFullTime = a.getInteger(R.styleable.TimerView_fulltime, mFullTime);
-            mCurTime = a.getInteger(R.styleable.TimerView_fulltime, mCurTime);
+            mCurTime = a.getInteger(R.styleable.TimerView_curtime, mCurTime);
 
             mProgressWidth = (int) a.getDimension(R.styleable.TimerView_progressWidth, mProgressWidth);
             progressColor = a.getColor(R.styleable.TimerView_progressColor, progressColor);
 
-            mArcWidth = (int) a.getDimension(R.styleable.TimerView_arcWidth, mArcWidth);
-            arcColor = a.getColor(R.styleable.TimerView_arcColor, arcColor);
+            mGrooveWidth = (int) a.getDimension(R.styleable.TimerView_grooveWidth, mGrooveWidth);
+            grooveColor = a.getColor(R.styleable.TimerView_grooveColor, grooveColor);
 
             mPlayButtonTriangleSideLength = (int) a.getDimension(R.styleable.TimerView_playButtonTriangleSideLength,
                     mPlayButtonTriangleSideLength);
@@ -245,12 +354,15 @@ public class TimerView extends View {
             bigTextColor = a.getColor(R.styleable.TimerView_bigTextColor, bigTextColor);
             smallTextColor = a.getColor(R.styleable.TimerView_smallTextColor, smallTextColor);
 
-            backColor = a.getColor(R.styleable.TimerView_backgroundColor, backColor);
+            backColor = a.getColor(R.styleable.TimerView_backgroundCircleColor, backColor);
 
             mAllowMoveForward = a.getBoolean(R.styleable.TimerView_allowMoveForward, mAllowMoveForward);
             mAllowMoveBackward = a.getBoolean(R.styleable.TimerView_allowMoveBackward, mAllowMoveBackward);
 
             mEnabled = a.getBoolean(R.styleable.TimerView_enabled, mEnabled);
+
+            mCountdown = a.getBoolean(R.styleable.TimerView_countdown, mCountdown);
+
             a.recycle();
         }
 
@@ -262,11 +374,11 @@ public class TimerView extends View {
         mRealProgressSweep = (float) mCurTime / valuePerDegree();
         mVisibleProgressSweep = mRealProgressSweep;
 
-        mArcPaint = new Paint();
-        mArcPaint.setColor(arcColor);
-        mArcPaint.setAntiAlias(true);
-        mArcPaint.setStyle(Paint.Style.STROKE);
-        mArcPaint.setStrokeWidth(mArcWidth);
+        mGroovePaint = new Paint();
+        mGroovePaint.setColor(grooveColor);
+        mGroovePaint.setAntiAlias(true);
+        mGroovePaint.setStyle(Paint.Style.STROKE);
+        mGroovePaint.setStrokeWidth(mGrooveWidth);
 
         mBackPaint = new Paint();
         mBackPaint.setColor(backColor);
@@ -300,13 +412,13 @@ public class TimerView extends View {
         mPauseShapePaint.setColor(pauseButtonTint);
         mPauseShapePaint.setAntiAlias(true);
         mPauseShapePaint.setStyle(Paint.Style.STROKE);
-        mPauseShapePaint.setStrokeWidth(mArcRadius/PAUSE_SHAPE_STROKE_WIDTH_FACTOR);
+        mPauseShapePaint.setStrokeWidth(mFullRadius /PAUSE_SHAPE_STROKE_WIDTH_FACTOR);
 
         mFinishShapePaint = new Paint();
         mFinishShapePaint.setColor(finishIconTint);
         mFinishShapePaint.setAntiAlias(true);
         mFinishShapePaint.setStyle(Paint.Style.STROKE);
-        mFinishShapePaint.setStrokeWidth(mArcRadius/FINISH_SHAPE_STROKE_WIDTH_FACTOR);
+        mFinishShapePaint.setStrokeWidth(mFullRadius /FINISH_SHAPE_STROKE_WIDTH_FACTOR);
     }
 
     @Override
@@ -319,23 +431,29 @@ public class TimerView extends View {
         mTranslateX = (int) (width * 0.5f);
         mTranslateY = (int) (height * 0.5f);
 
+        mArcWidth=(mGrooveWidth>0)?mGrooveWidth:mProgressWidth;
+
+        mFullRadius = (min - getPaddingLeft()) / 2;
         int arcDiameter = min - getPaddingLeft() - mArcWidth;
         mArcRadius = arcDiameter / 2;
         float top = height / 2 - (arcDiameter / 2);
         float left = width / 2 - (arcDiameter / 2);
         mArcRect.set(left, top, left + arcDiameter, top + arcDiameter);
 
+        mBackRect.set(height / 2 - mFullRadius, width / 2 - mFullRadius, height / 2 + mFullRadius, width / 2 + mFullRadius);
+
         mBigTextPaint.getTextBounds(formatTime(0), 0, mCurFormattedTime.length(), mBigTextRect);
         mSmallTextPaint.getTextBounds(formatTime(0), 0, mCurFormattedTime.length(), mSmallTextRect);
 
         mPlayTriangle = getEquilateralTriangle(mPlayButtonTriangleSideLength!=-1?
-                mPlayButtonTriangleSideLength:(int) (mArcRadius/PLAY_TRIANGLE_SIZE_FACTOR));
+                mPlayButtonTriangleSideLength:(int) (mFullRadius /PLAY_TRIANGLE_SIZE_FACTOR));
 
-        mPauseShape = getPauseShape((int) (mArcRadius/PAUSE_SHAPE_SIZE_FACTOR));
-        mPauseShapePaint.setStrokeWidth(mArcRadius/PAUSE_SHAPE_STROKE_WIDTH_FACTOR);
+        mPauseShape = getPauseShape((int) (mFullRadius /PAUSE_SHAPE_SIZE_FACTOR));
+        mPauseShapePaint.setStrokeWidth(mFullRadius /PAUSE_SHAPE_STROKE_WIDTH_FACTOR);
 
-        mFinishShape = getFinishShape((int) (mArcRadius/FINISH_SHAPE_SIZE_FACTOR));
-        mFinishShapePaint.setStrokeWidth(mArcRadius/FINISH_SHAPE_STROKE_WIDTH_FACTOR);
+        float finishShapeStokeWidth = mFullRadius /FINISH_SHAPE_STROKE_WIDTH_FACTOR;
+        mFinishShape = getFinishShape((int) (mFullRadius /FINISH_SHAPE_SIZE_FACTOR), finishShapeStokeWidth);
+        mFinishShapePaint.setStrokeWidth(finishShapeStokeWidth);
 
         if (mBackgroundDrawable!=null) {
             int backHalfWidth = (min - getPaddingLeft()) / 2;
@@ -348,6 +466,16 @@ public class TimerView extends View {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }
 
+
+    public static int dpToPx(float dp) {
+        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    }
+
+    public static int pxToDp(int px) {
+        return (int) (px / Resources.getSystem().getDisplayMetrics().density);
+    }
+
+
     @Override
     protected void onDraw(Canvas canvas) {
 
@@ -356,7 +484,7 @@ public class TimerView extends View {
             mBackgroundDrawable.draw(canvas);
             canvas.translate(-mTranslateX,-mTranslateY);
         }
-        else canvas.drawArc(mArcRect, ANGLE_OFFSET, 360, false, mBackPaint);
+        else canvas.drawArc(mBackRect, ANGLE_OFFSET, 360, false, mBackPaint);
 
 
         if (mIsPlaying) {
@@ -368,15 +496,18 @@ public class TimerView extends View {
         } else if (mCurTime<mFullTime || mIsTouchProgress) {
 
             int xPos = mTranslateX - mSmallTextRect.width() / 2;
-            int yPos = (int) (mTranslateY+mArcRadius*0.5f - ((mSmallTextPaint.descent() + mSmallTextPaint.ascent()) / 2));
+            int yPos = (int) (mTranslateY+ mFullRadius *0.5f - ((mSmallTextPaint.descent() + mSmallTextPaint.ascent()) / 2));
 
             canvas.drawText(mCurFormattedTime, xPos, yPos, mSmallTextPaint);
 
         }
 
         // draw the arc and progress
-        canvas.drawArc(mArcRect, ANGLE_OFFSET, 360, false, mArcPaint);
-        canvas.drawArc(mArcRect, ANGLE_OFFSET, mVisibleProgressSweep, false, mProgressPaint);
+        if (mGrooveWidth>0)
+            canvas.drawArc(mArcRect, ANGLE_OFFSET, 360, false, mGroovePaint);
+
+        if (mProgressWidth>0)
+            canvas.drawArc(mArcRect, ANGLE_OFFSET, mVisibleProgressSweep, false, mProgressPaint);
 
         if (!mIsPlaying) {
             canvas.translate(mTranslateX, mTranslateY);
@@ -396,7 +527,7 @@ public class TimerView extends View {
         else {
 
             int xPos = canvas.getWidth() / 2;
-            int yPos = (int) (mTranslateY+mArcRadius*0.5f);
+            int yPos = (int) (mTranslateY+mFullRadius*0.5f);
 
             canvas.translate(xPos, yPos);
 
@@ -439,7 +570,7 @@ public class TimerView extends View {
     private void incrementTime() {
         long timeDiff = System.currentTimeMillis()-mPreviousSystemTime;
 
-        updateProgress((int) (mCurrentProgress+timeDiff), false);
+        updateProgress((int) (mCurTime+timeDiff), false);
         if (mCurTime>mFullTime) {
             mCurTime=mFullTime;
             formatCurTime();
@@ -452,7 +583,8 @@ public class TimerView extends View {
 
     private void formatCurTime() {
         SimpleDateFormat sdfDate = new SimpleDateFormat(mTimeFormat);
-        mCurFormattedTime = sdfDate.format(new Date(mCurTime));
+        sdfDate.setTimeZone(TimeZone.getTimeZone("UTC"));
+        mCurFormattedTime = sdfDate.format(new Date(mCountdown?(mFullTime-mCurTime):mCurTime));
     }
 
     private String formatTime(long time) {
@@ -467,12 +599,14 @@ public class TimerView extends View {
 
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
-                    if (mOnTimerViewChangeListener != null)
-                        mOnTimerViewChangeListener.onStartTrackingTouch(this);
                     mThisTouchUpdateTimes=0;
-                    mProgressBeforeTouch=mCurrentProgress;
+                    mTimeBeforeTouch =mCurTime;
 //					updateOnTouch(event);
-                    if (touchHitsArc(event)) mIsTouchProgress=true;
+                    if (touchHitsArc(event) && (mAllowMoveBackward || mAllowMoveForward)) {
+                        mIsTouchProgress=true;
+                        if (mOnTimerViewChangeListener != null)
+                            mOnTimerViewChangeListener.onStartTrackingTouch(this);
+                    }
                     break;
                 case MotionEvent.ACTION_MOVE:
                     if (mIsTouchProgress)
@@ -480,7 +614,7 @@ public class TimerView extends View {
                     break;
                 case MotionEvent.ACTION_UP:
                     if (!mIsTouchProgress) {
-                        if (touchHitsInner(event)) {
+                        if (touchHitsInner(event) && mCurTime<mFullTime) {
                             if (mIsPlaying) stop(); else play();
                         }
                     }
@@ -518,9 +652,12 @@ public class TimerView extends View {
         float x=event.getX()-mTranslateX;
         float y=event.getY()-mTranslateY;
 
-        int outerRadius=mArcRadius+mArcWidth;
+        int outerRadius= mFullRadius;
         int innerRadius=outerRadius-mArcWidth;
-        if (mArcWidth/mArcRadius<0.25) innerRadius= (int) (mArcRadius-mArcWidth*1.5f); //so that it would be easier to hit
+
+        if (mArcWidth*1.0f / mFullRadius <0.25f) {
+            innerRadius= (int) (outerRadius-mArcWidth*1.5f); //so that it would be easier to hit
+        }
 
 
         return ((x*x+y*y<=outerRadius*outerRadius) && (x*x+y*y>=innerRadius*innerRadius));
@@ -578,36 +715,35 @@ public class TimerView extends View {
             return;
         }
 
-        if (fromUser && ((progress>mProgressBeforeTouch && !mAllowMoveForward) ||
-                (progress<mProgressBeforeTouch && !mAllowMoveBackward)))
+        if (fromUser && ((progress> mTimeBeforeTouch && !mAllowMoveForward) ||
+                (progress< mTimeBeforeTouch && !mAllowMoveBackward)))
             return;
 
         // record previous and current progress change
         if (mThisTouchUpdateTimes == 1) {
-            mCurrentProgress = progress;
-            mPreviousProgress = progress;
+            mCurTime = progress;
+            mPreviousTime = progress;
         } else {
-            mPreviousProgress = mCurrentProgress;
-            mCurrentProgress = progress;
+            mPreviousTime = mCurTime;
+            mCurTime = progress;
         }
 
         if (fromUser) {
             int quater=mFullTime/4;
 
-            if (mCurrentProgress<=quater && mPreviousProgress>=mFullTime-quater) {
+            if (mCurTime<=quater && mPreviousTime >=mFullTime-quater) {
                 progress=mFullTime;
-                mCurrentProgress=mFullTime;
+                mCurTime=mFullTime;
             }
-            else if (mCurrentProgress>=mFullTime-quater && mPreviousProgress<=quater) {
+            else if (mCurTime>=mFullTime-quater && mPreviousTime <=quater) {
                 progress=0;
-                mCurrentProgress=0;
+                mCurTime=0;
             }
         }
 
-        mCurTime = progress;
         formatCurTime();
 
-        if (mOnTimerViewChangeListener != null) {
+        if (mOnTimerViewChangeListener != null && fromUser) {
             mOnTimerViewChangeListener
                     .onTimeChangedByUser(this, progress);
         }
@@ -677,21 +813,46 @@ public class TimerView extends View {
     public interface OnTimerViewChangeListener {
 
         /**
-         * Notification that the point value has changed.
+         * Notification that the time was manually changed by user
          *
-         * @param timerView The TimerView view whose value has changed
+         * @param timerView The corresponding TimerView
          * @param time     The current time value.
          */
         void onTimeChangedByUser(TimerView timerView, int time);
 
+        /**
+         * Notification user started to manually change the value of the time
+         *
+         * @param timerView The corresponding TimerView
+         */
         void onStartTrackingTouch(TimerView timerView);
 
+        /**
+         * Notification user finished to manually change the value of the time
+         *
+         * @param timerView The corresponding TimerView
+         */
         void onStopTrackingTouch(TimerView timerView);
 
+        /**
+         * Notification that timer has started to play
+         *
+         * @param timerView The corresponding TimerView
+         */
         void onPlayStarted(TimerView timerView);
 
+        /**
+         * Notification that timer has stopped
+         *
+         * @param timerView The corresponding TimerView
+         */
         void onPlayStopped(TimerView timerView);
 
+        /**
+         * Notification that timer has finished
+         *
+         * @param timerView The corresponding TimerView
+         */
         void onPlayFinished(TimerView timerView);
     }
 
@@ -725,44 +886,116 @@ public class TimerView extends View {
         return path;
     }
 
-    private static Path getFinishShape(int side) {
+    private static Path getFinishShape(int side, float width) {
 
         Path path = new Path();
-        path.moveTo(-0.15625f*side, 0.64843f*side);
-        path.lineTo(-0.843f*side, -0.039f*side);
+
+        width/=2.0f;
+        float widthPart= (float) Math.sqrt(width*width/2);
+        float len1=side*1.5f;
+        float len2=side*0.6f;
+        float len1Part=(float) Math.sqrt(len1*len1/2);
+        float len2Part=(float) Math.sqrt(len2*len2/2);
+
         path.moveTo(-0.289f*side, 0.484f*side);
-        path.lineTo(0.835f*side, -0.648f*side);
+        path.lineTo(-0.289f*side-len2Part, 0.484f*side-len2Part);
+        path.moveTo(-0.289f*side-widthPart, 0.484f*side+widthPart);
+        path.lineTo(-0.289f*side-widthPart+len1Part, 0.484f*side+widthPart-len1Part);
 
         return path;
     }
 
-    public void setPoints(int points) {
-        points = points > mFullTime ? mFullTime : points;
-        updateProgress(points, false);
+    /**
+     * Change the current time progress value
+     *
+     * @param curtime the new value of time
+     */
+
+    public void setCurTime(int curtime) {
+        curtime = curtime > mFullTime ? mFullTime : curtime;
+        updateProgress(curtime, false);
     }
 
-    public int getPoints() {
+    /**
+     * Get the current time progress value
+     *
+     */
+    public int getCurTime() {
         return mCurTime;
     }
 
+    /**
+     * Get the progress width value
+     *
+     */
     public int getProgressWidth() {
         return mProgressWidth;
     }
 
-    public void setProgressWidth(int mProgressWidth) {
-        this.mProgressWidth = mProgressWidth;
-        mProgressPaint.setStrokeWidth(mProgressWidth);
+    /**
+     * Change the progress width value
+     *
+     * @param progressWidth the new progress width value. Keep in mind that this value must be equal or smaller
+     *                    than the groove width value. Otherwise the progress arc won't be able to fit the view
+     */
+    public void setProgressWidth(int progressWidth) {
+        this.mProgressWidth = progressWidth;
+
+        int min = Math.min(mTranslateX*2, mTranslateY*2);
+
+        int width=mTranslateX*2;
+        int height=mTranslateY*2;
+
+        mArcWidth = (mGrooveWidth>0)?mGrooveWidth:mProgressWidth;
+
+        int arcDiameter = min - getPaddingLeft() - mArcWidth;
+        mArcRadius = arcDiameter / 2;
+        float top = height / 2 - (arcDiameter / 2);
+        float left = width / 2 - (arcDiameter / 2);
+        mArcRect.set(left, top, left + arcDiameter, top + arcDiameter);
+
+        mProgressPaint.setStrokeWidth(progressWidth);
+        invalidate();
     }
 
-    public int getArcWidth() {
-        return mArcWidth;
+    /**
+     * Get the groove width value
+     *
+     */
+    public int getGrooveWidth() {
+        return mGrooveWidth;
     }
 
-    public void setArcWidth(int mArcWidth) {
-        this.mArcWidth = mArcWidth;
-        mArcPaint.setStrokeWidth(mArcWidth);
+    /**
+     * Set the groove width value
+     *
+     * @param grooveWidth the new groove width value. Keep in mind that this value must be equal or bigger
+     *                    than the progress width value. Otherwise the progress arc won't be able to fit the view
+     */
+    public void setGrooveWidth(int grooveWidth) {
+        this.mGrooveWidth = grooveWidth;
+
+        int min = Math.min(mTranslateX*2, mTranslateY*2);
+
+        int width=mTranslateX*2;
+        int height=mTranslateY*2;
+
+        mArcWidth = (mGrooveWidth>0)?mGrooveWidth:mProgressWidth;
+
+        int arcDiameter = min - getPaddingLeft() - mArcWidth;
+        mArcRadius = arcDiameter / 2;
+        float top = height / 2 - (arcDiameter / 2);
+        float left = width / 2 - (arcDiameter / 2);
+        mArcRect.set(left, top, left + arcDiameter, top + arcDiameter);
+
+        mGroovePaint.setStrokeWidth(grooveWidth);
+        invalidate();
     }
 
+    /**
+     * Get the view is touchable for the user
+     *
+     */
     public boolean isEnabled() {
         return mEnabled;
     }
@@ -771,29 +1004,57 @@ public class TimerView extends View {
         this.mEnabled = enabled;
     }
 
+    /**
+     * Get the progress color value
+     *
+     */
     public int getProgressColor() {
         return mProgressPaint.getColor();
     }
 
+    /**
+     * Set the progress color value
+     *
+     * @param color the new progress color value
+     */
     public void setProgressColor(int color) {
         mProgressPaint.setColor(color);
         invalidate();
     }
 
+    /**
+     * Get the arc color value
+     *
+     */
     public int getArcColor() {
-        return mArcPaint.getColor();
+        return mGroovePaint.getColor();
     }
 
+    /**
+     * Set the arc color value
+     *
+     * @param color the new arc color value
+     */
     public void setArcColor(int color) {
-        mArcPaint.setColor(color);
+        mGroovePaint.setColor(color);
         invalidate();
     }
 
+
+    /**
+     * Get the big text color value
+     *
+     */
     public void setBigTextColor(int textColor) {
         mBigTextPaint.setColor(textColor);
         invalidate();
     }
 
+    /**
+     * Set the big text color value
+     *
+     * @param textSize the new big text color value
+     */
     public void setBigTextSize(float textSize) {
         mBigTextSize = textSize;
         mBigTextPaint.setTextSize(mBigTextSize);
@@ -801,11 +1062,20 @@ public class TimerView extends View {
         invalidate();
     }
 
+    /**
+     * Get the small text color value
+     *
+     */
     public void setSmallTextColor(int textColor) {
         mSmallTextPaint.setColor(textColor);
         invalidate();
     }
 
+    /**
+     * Set the small text color value
+     *
+     * @param textSize the new small text color value
+     */
     public void setSmallTextSize(float textSize) {
         mSmallTextSize = textSize;
         mSmallTextPaint.setTextSize(mSmallTextSize);
@@ -813,57 +1083,395 @@ public class TimerView extends View {
         invalidate();
     }
 
-
+    /**
+     * Get the time value representing the whole cycle of the timer (the max value)
+     *
+     */
     public int getFullTime() {
         return mFullTime;
     }
 
+    /**
+     * Set the time value representing the whole cycle of the timer (the max value)
+     *
+     * @param fullTime the new fulltime value
+     */
     public void setFullTime(int fullTime) {
         if (fullTime <= 0)
-            throw new IllegalArgumentException("Max should not be less than min.");
+            throw new IllegalArgumentException("FullTime should be greater than 0.");
         this.mFullTime = fullTime;
+        updateProgress(mCurTime, false);
     }
 
+    /**
+     * Set the listener to the events of the timer
+     *
+     */
     public void setOnTimerViewChangeListener(OnTimerViewChangeListener onTimerViewChangeListener) {
         mOnTimerViewChangeListener = onTimerViewChangeListener;
     }
 
+    /**
+     * Get the length of the side of the play triangle (shown if no custom play button drawable is set)
+     *
+     */
     public int getPlayButtonTriangleSideLength() {
         return mPlayButtonTriangleSideLength;
     }
 
+
+    /**
+     * Get the size of the big text (shown while playing)
+     *
+     */
     public float getBigTextSize() {
         return mBigTextSize;
     }
 
+    /**
+     * Get the size of the small text (shown while not playing)
+     *
+     */
     public float getSmallTextSize() {
         return mSmallTextSize;
     }
 
+    /**
+     * Whether the timer is playing at the moment
+     *
+     */
     public boolean isIsPlaying() {
         return mIsPlaying;
     }
 
+    /**
+     * Whether the user is allowed to manually move the timer forward
+     *
+     */
     public boolean isAllowMoveForward() {
         return mAllowMoveForward;
     }
 
+    /**
+     * Whether the user is allowed to manually move the timer backward
+     *
+     */
     public boolean isAllowMoveBackward() {
         return mAllowMoveBackward;
     }
 
+    /**
+     * Set the length of the side of the play triangle (shown if no custom play button drawable is set)
+     *
+     * @param playButtonTriangleSideLength the new length of the side of the play triangle, in pixels
+     */
     public void setPlayButtonTriangleSideLength(int playButtonTriangleSideLength) {
         this.mPlayButtonTriangleSideLength = playButtonTriangleSideLength;
         if (mPlayButtonTriangleSideLength <= 0)
             throw new IllegalArgumentException("playButtonTriangleSideLength should not be less than min.");
         mPlayTriangle=getEquilateralTriangle(mPlayButtonTriangleSideLength);
+        invalidate();
     }
 
+
+    /**
+     * Specify whether the user is allowed to manually move the timer forward
+     *
+     * @param allowMoveForward whether the user is allowed to manually move the timer forward
+     */
     public void setAllowMoveForward(boolean allowMoveForward) {
         this.mAllowMoveForward = allowMoveForward;
     }
 
+    /**
+     * Specify whether the user is allowed to manually move the timer backward
+     *
+     * @param allowMoveBackward whether the user is allowed to manually move the timer backward
+     */
     public void setAllowMoveBackward(boolean allowMoveBackward) {
         this.mAllowMoveBackward = allowMoveBackward;
+    }
+
+    /**
+     * Set the play button icon
+     *
+     * @param playButtonIcon drawable for the play button icon
+     */
+    public void setPlayButtonIcon(@NonNull Drawable playButtonIcon) {
+
+        mPlayIcon = playButtonIcon;
+
+        int playIconHalfWidth = mPlayIcon.getIntrinsicWidth() / 2;
+        int playIconHalfHeight = mPlayIcon.getIntrinsicHeight() / 2;
+
+        mPlayIcon.setBounds(-playIconHalfWidth, -playIconHalfHeight, playIconHalfWidth,
+                playIconHalfHeight);
+
+        if (mPlayButtonTint!=null) {
+            mPlayIcon.setColorFilter(new PorterDuffColorFilter(mPlayButtonTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        invalidate();
+    }
+
+    /**
+     * Set the pause button icon
+     *
+     * @param pauseButtonIcon drawable for the pause button icon
+     */
+    public void setPauseButtonIcon(@NonNull Drawable pauseButtonIcon) {
+
+        mPauseIcon = pauseButtonIcon;
+
+        int iconHalfWidth = mPauseIcon.getIntrinsicWidth() / 2;
+        int iconHalfHeight = mPauseIcon.getIntrinsicHeight() / 2;
+
+        mPauseIcon.setBounds(-iconHalfWidth, -iconHalfHeight, iconHalfWidth,
+                iconHalfHeight);
+
+        if (mPauseButtonTint!=null) {
+            mPauseIcon.setColorFilter(new PorterDuffColorFilter(mPauseButtonTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        invalidate();
+    }
+
+    /**
+     * Set the finish icon
+     *
+     * @param icon drawable for the finish icon
+     */
+    public void setFinishIcon(@NonNull Drawable icon) {
+
+        mFinishIcon = icon;
+
+        int iconHalfWidth = mFinishIcon.getIntrinsicWidth() / 2;
+        int iconHalfHeight = mFinishIcon.getIntrinsicHeight() / 2;
+
+        mFinishIcon.setBounds(-iconHalfWidth, -iconHalfHeight, iconHalfWidth,
+                iconHalfHeight);
+
+        if (mFinishIconTint!=null) {
+            mFinishIcon.setColorFilter(new PorterDuffColorFilter(mFinishIconTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        invalidate();
+    }
+
+    /**
+     * Set the finish icon tint
+     *
+     * @param color the new color tint for the finish icon
+     */
+    public void setFinishIconTint(int color) {
+
+        mFinishIconTint = color;
+        if (mFinishIcon!=null) {
+            mFinishIcon.setColorFilter(new PorterDuffColorFilter(mFinishIconTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        mFinishShapePaint.setColor(mFinishIconTint);
+
+        invalidate();
+    }
+
+    /**
+     * Set the play icon tint
+     *
+     * @param color the new color tint for the play icon
+     */
+    public void setPlayButtonIconTint(int color) {
+
+        mPlayButtonTint = color;
+        if (mPlayIcon!=null) {
+            mPlayIcon.setColorFilter(new PorterDuffColorFilter(mPlayButtonTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        mPlayTrianglePaint.setColor(mPlayButtonTint);
+
+        invalidate();
+    }
+
+    /**
+     * Set the pause icon tint
+     *
+     * @param color the new color tint for the pause icon
+     */
+    public void setPauseButtonIconTint(int color) {
+
+        mPauseButtonTint = color;
+        if (mPauseIcon!=null) {
+            mPauseIcon.setColorFilter(new PorterDuffColorFilter(mPauseButtonTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        mPauseShapePaint.setColor(mPauseButtonTint);
+
+        invalidate();
+    }
+
+    /**
+     * Set the format for the time to draw on the screen
+     *
+     * @param timeFormat the string containing the time format (e.g. 'mm:ss')
+     */
+    public void setTimeFormat(String timeFormat) {
+        this.mTimeFormat = timeFormat;
+        formatCurTime();
+        mBigTextPaint.getTextBounds(formatTime(0), 0, mCurFormattedTime.length(), mBigTextRect);
+        mSmallTextPaint.getTextBounds(formatTime(0), 0, mCurFormattedTime.length(), mSmallTextRect);
+        invalidate();
+    }
+
+    /**
+     * Set the current time format
+     *
+     */
+    public String getTimeFormat() {
+        return mTimeFormat;
+    }
+
+    /**
+     * Set the background drawable for the circle
+     *
+     * @param drawable the background drawable (should probably be shaped like a circle)
+     */
+
+    public void setCircleBackgroundDrawable(@NonNull Drawable drawable) {
+
+        final int min = Math.min(mTranslateX*2, mTranslateY*2);
+
+        mBackgroundDrawable = drawable;
+
+        int backHalfWidth = (min - getPaddingLeft()) / 2;
+        int backHalfHeight =  (min - getPaddingLeft()) / 2;
+
+        mBackgroundDrawable.setBounds(-backHalfWidth, -backHalfHeight, backHalfWidth,
+                backHalfHeight);
+
+        invalidate();
+    }
+
+    /**
+     * Set the background color for the background circle
+     *
+     * @param color the background color for the background circle
+     */
+
+    public void setCircleBackgroundColor(int color) {
+
+        mBackPaint.setColor(color);
+        invalidate();
+    }
+
+
+    /**
+     * Set the play button icon
+     *
+     * @param resId drawable resource for the play button icon
+     */
+    public void setPlayButtonIcon(@DrawableRes int resId) {
+
+        mPlayIcon = new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), resId));
+
+        int playIconHalfWidth = mPlayIcon.getIntrinsicWidth() / 2;
+        int playIconHalfHeight = mPlayIcon.getIntrinsicHeight() / 2;
+
+        mPlayIcon.setBounds(-playIconHalfWidth, -playIconHalfHeight, playIconHalfWidth,
+                playIconHalfHeight);
+
+        if (mPlayButtonTint!=null) {
+            mPlayIcon.setColorFilter(new PorterDuffColorFilter(mPlayButtonTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        invalidate();
+    }
+
+    /**
+     * Set the pause button icon
+     *
+     * @param resId drawable resource for the pause button icon
+     */
+    public void setPauseButtonIcon(@DrawableRes int resId) {
+
+        mPauseIcon = new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), resId));
+
+        int iconHalfWidth = mPauseIcon.getIntrinsicWidth() / 2;
+        int iconHalfHeight = mPauseIcon.getIntrinsicHeight() / 2;
+
+        mPauseIcon.setBounds(-iconHalfWidth, -iconHalfHeight, iconHalfWidth,
+                iconHalfHeight);
+
+        if (mPauseButtonTint!=null) {
+            mPauseIcon.setColorFilter(new PorterDuffColorFilter(mPauseButtonTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        invalidate();
+    }
+
+    /**
+     * Set the finish icon
+     *
+     * @param resId drawable resource for the finish icon
+     */
+    public void setFinishIcon(@DrawableRes int resId) {
+
+        mFinishIcon = new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), resId));
+
+        int iconHalfWidth = mFinishIcon.getIntrinsicWidth() / 2;
+        int iconHalfHeight = mFinishIcon.getIntrinsicHeight() / 2;
+
+        mFinishIcon.setBounds(-iconHalfWidth, -iconHalfHeight, iconHalfWidth,
+                iconHalfHeight);
+
+        if (mFinishIconTint!=null) {
+            mFinishIcon.setColorFilter(new PorterDuffColorFilter(mFinishIconTint, PorterDuff.Mode.SRC_ATOP));
+        }
+
+        invalidate();
+    }
+
+
+    /**
+     * Set the background drawable
+     *
+     * @param resId the background drawable resource (should probably be shaped like a circle)
+     */
+
+    public void setCustomBackgroundDrawable(@DrawableRes int resId) {
+
+        final int min = Math.min(mTranslateX*2, mTranslateY*2);
+
+        mBackgroundDrawable = new BitmapDrawable(getResources(), BitmapFactory.decodeResource(getResources(), resId));
+
+        int backHalfWidth = (min - getPaddingLeft()) / 2;
+        int backHalfHeight =  (min - getPaddingLeft()) / 2;
+
+        mBackgroundDrawable.setBounds(-backHalfWidth, -backHalfHeight, backHalfWidth,
+                backHalfHeight);
+
+        invalidate();
+    }
+
+    /**
+     * Whether the timer is in the countdown mode
+     *
+     */
+    public boolean isCountdown() {
+        return mCountdown;
+    }
+
+
+    /**
+     * Specify whether the timer should be in the countdown mode
+     *
+     * @param countdown whether the timer is in the countdown mode
+     */
+    public void setCountdown(boolean countdown) {
+        this.mCountdown = countdown;
+
+        formatCurTime();
+        mBigTextPaint.getTextBounds(formatTime(0), 0, mCurFormattedTime.length(), mBigTextRect);
+        mSmallTextPaint.getTextBounds(formatTime(0), 0, mCurFormattedTime.length(), mSmallTextRect);
+        invalidate();
     }
 }

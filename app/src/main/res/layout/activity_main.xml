@@ -8,9 +8,11 @@
     tools:context="ru.dedoxyribose.timerviewapplication.MainActivity">
 
     <ru.dedoxyribose.timerviewapplication.TimerView
+        android:id="@+id/timerView"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:layout_centerHorizontal="false"
         android:layout_centerInParent="true"
-        android:layout_centerVertical="false"/>
+        android:layout_centerVertical="false"
+        />
 </RelativeLayout>

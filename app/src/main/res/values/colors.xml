@@ -8,4 +8,6 @@
     <color name="colorProgress">#f34213</color>
     <color name="colorText">#f34213</color>
     <color name="colorBack">#2e2e3a</color>
+
+    <color name="colorAdd">#058fe2</color>
 </resources>

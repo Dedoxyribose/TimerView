@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <declare-styleable name="TimerView">
-        <attr name="points" format="integer" />
         <attr name="fulltime" format="integer" />
         <attr name="curtime" format="integer" />
-        <attr name="step" format="integer"/>
+
+        <attr name="countdown" format="boolean"/>
 
         <attr name="allowMoveForward" format="boolean"/>
         <attr name="allowMoveBackward" format="boolean"/>
 
-        <attr name="backgroundDrawable" format="reference"/>
+        <attr name="backgroundCircleDrawable" format="reference"/>
 
         <attr name="playIcon" format="reference" />
         <attr name="pauseIcon" format="reference" />
@@ -19,14 +19,14 @@
 
         <attr name="progressWidth" format="dimension" />
         <attr name="progressColor" format="color" />
-        <attr name="backgroundColor" format="color" />
+        <attr name="backgroundCircleColor" format="color" />
 
         <attr name="playButtonTint" format="color" />
         <attr name="pauseButtonTint" format="color" />
         <attr name="finishIconTint" format="color" />
 
-        <attr name="arcWidth" format="dimension" />
-        <attr name="arcColor" format="color" />
+        <attr name="grooveWidth" format="dimension" />
+        <attr name="grooveColor" format="color" />
 
         <attr name="bigTextSize" format="dimension"/>
         <attr name="smallTextSize" format="dimension"/>
@@ -36,7 +36,6 @@
         <attr name="bigTextColor" format="color"/>
         <attr name="smallTextColor" format="color"/>
 
-        <attr name="clockwise" format="boolean" />
         <attr name="enabled" format="boolean" />
 
     </declare-styleable>
