@@ -11,7 +11,7 @@ A simple android countdown timer. Ready-to-use and fully customizable.
 - Much appearance customization (colors, line thickness, icons) via xml and programmatically
 - Customizable time format
 - Countdown (00:59) or countup (00:01) time appearance
-- Let the user to drag and drop current time value (or forbid him to do so)
+- Let the user drag and drop current time value (or forbid him to do so)
 - Smooth drag animation
 
 ## Integration
