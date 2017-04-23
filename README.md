@@ -16,18 +16,7 @@ A simple android countdown timer. Ready-to-use and fully customizable.
 
 ## Integration
 
-Add this line to your project build.gradle file
-
-```Java
-allprojects {
-    repositories {
-        ...
-        maven { url 'https://dl.bintray.com/tomvertfour/timerview' } 
-    }
-}
-```
-
-and in your app build.gradle file
+Add this line to your app build.gradle file
 
 ```Java
 dependencies {
